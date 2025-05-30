@@ -42,9 +42,8 @@
 <body>
   <h2>📷 Nozzle Scanner</h2>
 
-  <label for="cameraSelect"><strong>Kies camera:</strong></label>
-  <select id="cameraSelect"></select>
-  <button onclick="startScanner()">Start Scanner</button>
+  <button onclick="startScanner()">📷 Start Scanner</button>
+  <small>📌 Tik op het camerabeeld om scherp te stellen (indien ondersteund)</small>
   <button id="closeScannerBtn" onclick="closeScanner()">❌ Sluit Scanner</button>
   <div id="reader"></div>
 
@@ -21793,51 +21792,57 @@
 
     let scanner = null;
 
-    function startScanner() {
-      const selectedCameraId = document.getElementById("cameraSelect").value;
-      if (!selectedCameraId) {
-        alert("Selecteer eerst een camera.");
-        return;
+function startScanner() {
+  Html5Qrcode.getCameras().then(devices => {
+    // Probeer een achtercamera te kiezen
+    const backCamera = devices.find(device =>
+      device.label.toLowerCase().includes("back") ||
+      device.label.toLowerCase().includes("rear")
+    ) || devices[0]; // fallback naar eerste camera als geen "back" wordt gevonden
+
+    scanner = new Html5Qrcode("reader", { rememberLastUsedCamera: true });
+
+    scanner.start(
+      { deviceId: { exact: backCamera.id } },
+      {
+        fps: 10,
+        qrbox: { width: 400, height: 250 },
+        aspectRatio: 1.777,
+        disableFlip: true
+      },
+      decodedText => {
+        scanner.stop().then(() => {
+          scanner.clear();
+          scanner = null;
+          document.getElementById("closeScannerBtn").style.display = "none";
+        });
+        const code = decodedText.trim();
+        document.getElementById("resultsContainer").innerHTML = `<p>📦 Gescand: <strong>${code}</strong></p>`;
+        const matches = csvData.filter(item =>
+          String(item["EAN13"]).trim() === code
+        );
+        showResults(matches);
+      },
+      error => {
+        console.warn("Scan fout:", error);
       }
+    ).then(() => {
+      document.getElementById("closeScannerBtn").style.display = "inline-block";
+    }).catch(err => {
+      console.error("Start scanner mislukt:", err);
+      scanner = null;
+    });
 
-      scanner = new Html5Qrcode("reader", { rememberLastUsedCamera: true });
+    // Manuele focus bij klik op camerabeeld (werkt niet op alle toestellen)
+    const readerElement = document.getElementById("reader");
+    readerElement.addEventListener("click", () => {
+      console.log("Manuele focus getriggerd (indien ondersteund)");
+    });
 
-      scanner.start(
-        { deviceId: { exact: selectedCameraId } },
-        {
-          fps: 10,
-          qrbox: { width: 400, height: 250 },
-          aspectRatio: 1.777
-        },
-        decodedText => {
-          scanner.stop().then(() => {
-            scanner.clear();
-            scanner = null;
-            document.getElementById("closeScannerBtn").style.display = "none";
-          });
-          const code = decodedText.trim();
-          const matches = csvData.filter(item =>
-            String(item["EAN13"]).trim() === code
-          );
-          showResults(matches);
-        },
-        error => {
-          console.warn("Scan fout:", error);
-        }
-      ).then(() => {
-        document.getElementById("closeScannerBtn").style.display = "inline-block";
-      }).catch(err => {
-        console.error("Start scanner mislukt:", err);
-        scanner = null;
-      });
-
-      // Voeg tik-om-autofocus toe als beschikbaar
-      const readerElement = document.getElementById("reader");
-      readerElement.addEventListener("click", () => {
-        // focus is browser- en toestelafhankelijk — geen garantie!
-        console.log("Gebruiker tikte voor manuele focus (indien ondersteund)");
-      });
-    }
+  }).catch(err => {
+    console.error("Kon camera’s niet ophalen:", err);
+  });
+}
 
     function closeScanner() {
       if (scanner !== null) {
