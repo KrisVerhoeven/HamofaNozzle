@@ -21783,8 +21783,10 @@
     function manualSearch() {
       const input = document.getElementById("manualInput").value.trim().toLowerCase();
       const matches = csvData.filter(item =>
-        String(item["EAN13"]).trim() === input ||
-        String(item["NozzleNumber:"]).trim().toLowerCase() === input
+    String(item["EAN13"]).trim() === input ||
+    String(item["NozzleNumber:"]).trim().toLowerCase() === input ||
+    String(item["Search Nr:"]).trim().toLowerCase() === input ||
+    String(item["Holder Number:"]).trim().toLowerCase().replace(/\s+/g, '') === input
       );
       showResults(matches);
     }
