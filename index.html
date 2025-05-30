@@ -3,13 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Barcode Scanner - EAN13 & Nozzle</title>
+  <title>Barcode Scanner - Hamofa</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
-      font-size: 18px;
       background-color: #f8f9fa;
     }
     button, input, select {
@@ -17,27 +16,22 @@
       padding: 10px;
       margin: 10px 0;
       width: 100%;
-      max-width: 350px;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #007bff;
-      border: none;
-      color: white;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
+      max-width: 400px;
     }
     #reader {
       width: 100%;
-      max-width: 400px;
-      margin-top: 10px;
+      max-width: 500px;
+      margin: 10px 0;
       border: 1px solid #ccc;
+      position: relative;
+    }
+    #closeScannerBtn {
+      display: none;
+      background-color: #dc3545;
+      color: white;
     }
     .result {
-      background-color: white;
+      background: white;
       padding: 15px;
       margin: 10px 0;
       border-radius: 8px;
@@ -46,10 +40,12 @@
   </style>
 </head>
 <body>
-  <h2>Barcode Scanner</h2>
+  <h2>📷 Barcode Scanner</h2>
+
   <label for="cameraSelect"><strong>Kies camera:</strong></label>
   <select id="cameraSelect"></select>
-  <button onclick="startScanner()">📷 Start Scanner</button>
+  <button onclick="startScanner()">Start Scanner</button>
+  <button id="closeScannerBtn" onclick="closeScanner()">❌ Sluit Scanner</button>
   <div id="reader"></div>
 
   <h3>Zoek handmatig (EAN13 of Nozzle)</h3>
@@ -21796,28 +21792,26 @@
     let scanner = null;
 
     function startScanner() {
-      if (scanner !== null) {
-        console.warn("Scanner is al actief.");
-        return;
-      }
-
       const selectedCameraId = document.getElementById("cameraSelect").value;
       if (!selectedCameraId) {
         alert("Selecteer eerst een camera.");
         return;
       }
 
-      scanner = new Html5Qrcode("reader", {
-        formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13]
-      });
+      scanner = new Html5Qrcode("reader", { rememberLastUsedCamera: true });
 
       scanner.start(
         { deviceId: { exact: selectedCameraId } },
-        { fps: 10, qrbox: { width: 350, height: 200 } },
+        {
+          fps: 10,
+          qrbox: { width: 400, height: 250 },
+          aspectRatio: 1.777
+        },
         decodedText => {
           scanner.stop().then(() => {
             scanner.clear();
             scanner = null;
+            document.getElementById("closeScannerBtn").style.display = "none";
           });
           const code = decodedText.trim();
           const matches = csvData.filter(item =>
@@ -21828,13 +21822,32 @@
         error => {
           console.warn("Scan fout:", error);
         }
-      ).catch(err => {
-        console.error("Starten mislukt:", err);
+      ).then(() => {
+        document.getElementById("closeScannerBtn").style.display = "inline-block";
+      }).catch(err => {
+        console.error("Start scanner mislukt:", err);
         scanner = null;
+      });
+
+      // Voeg tik-om-autofocus toe als beschikbaar
+      const readerElement = document.getElementById("reader");
+      readerElement.addEventListener("click", () => {
+        // focus is browser- en toestelafhankelijk — geen garantie!
+        console.log("Gebruiker tikte voor manuele focus (indien ondersteund)");
       });
     }
 
-    // Haal lijst met beschikbare camera's op
+    function closeScanner() {
+      if (scanner !== null) {
+        scanner.stop().then(() => {
+          scanner.clear();
+          scanner = null;
+          document.getElementById("closeScannerBtn").style.display = "none";
+        });
+      }
+    }
+
+    // Camera’s ophalen
     Html5Qrcode.getCameras().then(devices => {
       const select = document.getElementById("cameraSelect");
       devices.forEach(device => {
@@ -21844,7 +21857,7 @@
         select.appendChild(option);
       });
     }).catch(err => {
-      console.error("Kan camera's niet ophalen:", err);
+      console.error("Kon camera’s niet ophalen:", err);
     });
   </script>
 </body>
