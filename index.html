@@ -139,12 +139,12 @@
         document.getElementById("resultsContainer").innerHTML = "<p>⚠️ Vul iets in om te zoeken.</p>";
         return;
       }
-      const matches = csvData.filter(item =>
-        String(item["EAN13"]).trim() === input ||
-        String(item["NozzleNumber:"]).trim().toLowerCase() === input ||
-        String(item["Search Nr:"]).trim().toLowerCase() === input ||
-        String(item["Holder Number:"]).trim().toLowerCase().replace(/\s+/g, '') === input
-      );
+const matches = csvData.filter(item =>
+  String(item["EAN13"]).trim() === input ||
+  String(item["NozzleNumber"]).trim().toLowerCase() === input ||
+  String(item["SearchNr"]).trim().toLowerCase() === input ||
+  String(item["HolderNumber"]).trim().toLowerCase().replace(/\s+/g, '') === input
+);
       showResults(matches);
     }
 
