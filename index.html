@@ -122,14 +122,14 @@ firebase.database().ref("nozzles").once("value").then(snapshot => {
       matches.forEach(match => {
         const div = document.createElement("div");
         div.className = "result";
-        div.innerHTML = `
-          <p><strong>Artikel Nr:</strong> ${match["Search Nr:"]}</p>
-          <p><strong>Nozzle Nr:</strong> ${match["NozzleNumber:"]}</p>
-          <p><strong>Verstuiver Houder:</strong> ${match["Holder Number:"]}</p>
-          <p><strong>Nominale druk:</strong> ${match["Bar Nom."] ?? "-"}</p>
-          <p><strong>Minimale druk:</strong> ${match["Bar Min."] ?? "-"}</p>
-          <p><strong>Maximale druk:</strong> ${match["Bar Max."] ?? "-"}</p>
-        `;
+div.innerHTML = `
+  <p><strong>Artikel Nr:</strong> ${match["Search Nr"] ?? "-"}</p>
+  <p><strong>Nozzle Nr:</strong> ${match["NozzleNumber"] ?? "-"}</p>
+  <p><strong>Verstuiver Houder:</strong> ${match["Holder Number"] ?? "-"}</p>
+  <p><strong>Nominale druk:</strong> ${match["Bar Nom"] ?? "-"}</p>
+  <p><strong>Minimale druk:</strong> ${match["Bar Min"] ?? "-"}</p>
+  <p><strong>Maximale druk:</strong> ${match["Bar Max"] ?? "-"}</p>
+`;
         container.appendChild(div);
       });
     }
