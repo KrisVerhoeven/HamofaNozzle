@@ -210,28 +210,31 @@ const matches = csvData.filter(item =>
       document.getElementById("adminOverlay").style.display = "none";
     }
 
-    function addNewEntry() {
-      const newEntry = {
-        "Search Nr:": document.getElementById("newSearchNr").value.trim(),
-        "NozzleNumber:": document.getElementById("newNozzle").value.trim(),
-        "Holder Number:": document.getElementById("newHolder").value.trim(),
-        "Bar Nom.": parseInt(document.getElementById("newBarNom").value.trim()) || null,
-        "Bar Min.": parseInt(document.getElementById("newBarMin").value.trim()) || null,
-        "Bar Max.": parseInt(document.getElementById("newBarMax").value.trim()) || null,
-        "EAN13": document.getElementById("newEAN").value.trim()
-      };
+function addNewEntry() {
+  const newEntry = {
+    "Search Nr": document.getElementById("newSearchNr").value.trim(),
+    "NozzleNumber": document.getElementById("newNozzle").value.trim(),
+    "Holder Number": document.getElementById("newHolder").value.trim(),
+    "Bar Nom": parseInt(document.getElementById("newBarNom").value.trim()) || null,
+    "Bar Min": parseInt(document.getElementById("newBarMin").value.trim()) || null,
+    "Bar Max": parseInt(document.getElementById("newBarMax").value.trim()) || null,
+    "EAN13": document.getElementById("newEAN").value.trim()
+  };
 
-      firebase.database().ref("nozzles").push(newEntry)
-        .then(() => {
-          alert("✅ Entry toegevoegd aan database!");
-          csvData.push(newEntry);
-          closeAdmin();
-        })
-        .catch(err => {
-          alert("❌ Fout bij toevoegen.");
-          console.error(err);
-        });
-    }
+  console.log("📦 Nieuwe entry klaar om op te slaan:", newEntry);
+
+  firebase.database().ref("nozzles").push(newEntry)
+    .then(() => {
+      alert("✅ Toegevoegd!");
+      closeAdmin();
+      // Optioneel: voeg lokaal toe zodat het direct doorzoekbaar is
+      csvData.push(newEntry);
+    })
+    .catch(err => {
+      console.error("❌ Fout bij toevoegen:", err);
+      alert("Fout bij toevoegen.");
+    });
+}
   </script>
 </body>
 </html>
