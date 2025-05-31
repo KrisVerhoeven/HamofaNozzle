@@ -8,6 +8,7 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -130,8 +131,19 @@ input, select {
       measurementId: "G-XSWW3X1E3D"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+firebase.initializeApp(firebaseConfig);
+
+// Automatisch inloggen als admin
+const auth = firebase.auth();
+auth.signInWithEmailAndPassword("kris@hamofa.be", "kris1989")
+  .then(() => {
+    console.log("✅ Ingelogd als admin");
+  })
+  .catch(error => {
+    console.error("❌ Automatisch inloggen mislukt:", error.message);
+  });
+
+const db = firebase.database();
     let csvData = [];
 
 firebase.database().ref("nozzles").once("value").then(snapshot => {
