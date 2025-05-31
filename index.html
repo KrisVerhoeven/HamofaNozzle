@@ -107,9 +107,10 @@
     const db = firebase.database();
     let csvData = [];
 
-    firebase.database().ref("nozzles").once("value").then(snapshot => {
-      csvData = Object.values(snapshot.val() || {});
-    });
+firebase.database().ref("nozzles").once("value").then(snapshot => {
+  csvData = Object.values(snapshot.val() || {});
+  console.log("👉 Eerste item uit Firebase:", csvData[0]); // 👈 voeg deze regel toe
+});
 
     function showResults(matches) {
       const container = document.getElementById("resultsContainer");
