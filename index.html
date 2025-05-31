@@ -14,16 +14,34 @@
       padding: 20px;
       background-color: #f8f9fa;
     }
-    button, input, select {
-      font-size: 18px;
-      padding: 10px;
-      margin: 10px 0;
-      width: 100%;
-      max-width: 400px;
-      border-radius: 6px;
-      box-sizing: border-box;
-    }
-    #reader {
+    button {
+  font-size: 18px;
+  padding: 20px 10px;             /* verhoogde hoogte */
+  margin: 10px 0;
+  width: 100%;
+  max-width: 400px;
+  box-sizing: border-box;
+  background-color: #007bff;      /* blauw */
+  color: white;
+  border-radius: 16px;               /* rechte hoeken (aanpasbaar) */
+  -webkit-appearance: none;       /* Safari fix */
+  appearance: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;      /* donkerder blauw bij hover (desktop) */
+}
+
+input, select {
+  font-size: 18px;
+  padding: 10px;
+  margin: 10px 0;
+  width: 100%;
+  max-width: 400px;
+  box-sizing: border-box;
+  border-radius: 0;
+}    #reader {
       width: 100%;
       max-width: 500px;
       margin: 10px 0;
