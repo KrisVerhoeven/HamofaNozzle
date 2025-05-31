@@ -47,8 +47,13 @@
   <button id="closeScannerBtn" onclick="closeScanner()">❌ Sluit Scanner</button>
   <div id="reader"></div>
 
-  <h3>Zoek handmatig (EAN13 of DLLA Nr)</h3>
-  <input id="manualInput" type="text" placeholder="Typ barcode of nozzle..." />
+  <h3>Zoek handmatig</h3>
+  <input
+  id="manualInput"
+  type="text"
+  placeholder="Typ EAN13,Nozzle Nr,Artikelnr of Houdernr..."
+  style="display: block; margin: 10px auto; font-size: 18px; padding: 10px; width: 100%; max-width: 400px;"
+  />
   <button onclick="manualSearch()">🔍 Zoek</button>
 
   <h3>Resultaten:</h3>
