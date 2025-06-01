@@ -274,10 +274,10 @@ function addNewEntry() {
       // Optioneel: voeg lokaal toe zodat het direct doorzoekbaar is
       csvData.push(newEntry);
     })
-    .catch(err => {
-      console.error("❌ Fout bij toevoegen:", err);
-      alert("Fout bij toevoegen.");
-    });
+   .catch(err => {
+  console.error("❌ Fout bij toevoegen:", err);
+  alert("❌ Fout bij toevoegen:\n" + err.message); // ← deze regel toont de echte fout als popup
+  });
 }
   </script>
 </body>
