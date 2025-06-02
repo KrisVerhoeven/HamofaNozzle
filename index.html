@@ -265,7 +265,7 @@
     let eanScannerInstance = null;
 
 function startEANScan() {
-  const scannerDiv = document.getElementById("eanScanner");
+  const wrapper = document.getElementById("eanScannerWrapper");
   scannerDiv.style.display = "block";
 
   Html5Qrcode.getCameras().then(devices => {
@@ -293,6 +293,7 @@ function stopEANScan() {
     eanScannerInstance.stop().then(() => {
       eanScannerInstance.clear();
       document.getElementById("eanScanner").style.display = "none";
+      document.getElementById("eanScannerWrapper").style.display = "none";
       eanScannerInstance = null;
     });
   }
