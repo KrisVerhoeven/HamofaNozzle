@@ -1,293 +1,159 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Nozzle Scanner - Hamofa</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background-color: #f8f9fa;
-    }
-    button {
-      font-size: 18px;
-      padding: 20px 10px;
-      margin: 10px 0;
-      width: 100%;
-      max-width: 400px;
-      box-sizing: border-box;
-      background-color: #007bff;
-      color: white;
-      border-radius: 16px;
-      appearance: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    input, select {
-      font-size: 18px;
-      padding: 10px;
-      margin: 10px 0;
-      width: 100%;
-      max-width: 400px;
-      box-sizing: border-box;
-      border-radius: 0;
-    }
-    #reader {
-      width: 100%;
-      max-width: 500px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-    }
-    #closeScannerBtn {
-      display: none;
-      background-color: #dc3545;
-      color: white;
-    }
-    .result {
-      background: white;
-      padding: 15px;
-      margin: 10px 0;
-      border-radius: 8px;
-      box-shadow: 0 0 6px rgba(0,0,0,0.1);
-    }
-    .search-block {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      width: 100%;
-      max-width: 400px;
-    }
-    #adminAccess {
-      all: unset;
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      opacity: 0.05;
-      cursor: pointer;
-      z-index: 1000;
-    }
-  </style>
-</head>
-<body>
-  <h2>📷 Nozzle Scanner</h2>
+<!-- Script-blok onderaan je HTML-pagina -->
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAg6WzWm4-jvYKaTSOsihHhb0lq7cGiO8o",
+    authDomain: "hamofa-nozzles.firebaseapp.com",
+    databaseURL: "https://hamofa-nozzles-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "hamofa-nozzles",
+    storageBucket: "hamofa-nozzles.firebasestorage.app",
+    messagingSenderId: "254337858286",
+    appId: "1:254337858286:web:00bc75aaf9662016fd51ff",
+    measurementId: "G-XSWW3X1E3D"
+  };
 
-  <button onclick="startScanner()">📷 Start Scanner</button>
-  <small>📌 Tik op het camerabeeld om scherp te stellen (indien ondersteund)</small>
-  <button id="closeScannerBtn" onclick="closeScanner()">❌ Sluit Scanner</button>
-  <div id="reader"></div>
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-  <h3>Zoek handmatig</h3>
-  <div class="search-block">
-    <input id="manualInput" type="text" placeholder="Typ EAN13,Nozzle Nr,Artikelnr of Houdernr..." autocomplete="off" />
-    <button onclick="manualSearch()">🔍 Zoek</button>
-  </div>
+  let csvData = [];
+  let adminLoggedIn = false;
 
-  <h3>Resultaten:</h3>
-  <div id="resultsContainer"></div>
+  firebase.database().ref("nozzles").on("value", snapshot => {
+    csvData = Object.values(snapshot.val() || {});
+    console.log("👉 Eerste item uit Firebase:", csvData[0]);
+  });
 
-  <!-- Verborgen admin knop en overlay -->
-  <button id="adminAccess">⚙️</button>
-  <div id="adminOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; padding:20px;">
-    <div id="loginForm">
-      <h2>🔐 Admin Login</h2>
-      <input type="password" id="adminPassword" placeholder="Wachtwoord..." />
-      <button onclick="checkPassword()">Inloggen</button>
-      <p id="loginMessage" style="color: red;"></p>
-    </div>
-    <div id="addForm" style="display:none;">
-      <h2>➕ Voeg nozzle toe</h2>
-      <input id="newSearchNr" placeholder="Search Nr" /><br />
-      <input id="newNozzle" placeholder="Nozzle Number" /><br />
-      <input id="newHolder" placeholder="Holder Number" /><br />
-      <input id="newBarNom" placeholder="Bar Nom." /><br />
-      <input id="newBarMin" placeholder="Bar Min." /><br />
-      <input id="newBarMax" placeholder="Bar Max." /><br />
-      <input id="newEAN" placeholder="EAN13" /><br />
-      <button onclick="addNewEntry()">Toevoegen</button>
-      <button onclick="closeAdmin()">Sluiten</button>
-    </div>
-  </div>
+  function showResults(matches) {
+    const container = document.getElementById("resultsContainer");
+    container.innerHTML = "";
+    if (matches.length === 0) {
+      container.innerHTML = "<p>Geen resultaten gevonden.</p>";
+      return;
+    }
+    matches.forEach(match => {
+      const div = document.createElement("div");
+      div.className = "result";
+      div.innerHTML = `
+        <p><strong>Artikel Nr:</strong> ${match["Search Nr"] ?? "-"}</p>
+        <p><strong>Nozzle Nr:</strong> ${match["NozzleNumber"] ?? "-"}</p>
+        <p><strong>Verstuiver Houder:</strong> ${match["Holder Number"] ?? "-"}</p>
+        <p><strong>Nominale druk:</strong> ${match["Bar Nom"] ?? "-"}</p>
+        <p><strong>Minimale druk:</strong> ${match["Bar Min"] ?? "-"}</p>
+        <p><strong>Maximale druk:</strong> ${match["Bar Max"] ?? "-"}</p>
+      `;
+      container.appendChild(div);
+    });
+  }
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAg6WzWm4-jvYKaTSOsihHhb0lq7cGiO8o",
-      authDomain: "hamofa-nozzles.firebaseapp.com",
-      databaseURL: "https://hamofa-nozzles-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "hamofa-nozzles",
-      storageBucket: "hamofa-nozzles.firebasestorage.app",
-      messagingSenderId: "254337858286",
-      appId: "1:254337858286:web:00bc75aaf9662016fd51ff",
-      measurementId: "G-XSWW3X1E3D"
+  function manualSearch() {
+    const input = document.getElementById("manualInput").value.trim().toLowerCase().replace(/\s+/g, '');
+    if (input === "") {
+      document.getElementById("resultsContainer").innerHTML = "<p>⚠️ Vul iets in om te zoeken.</p>";
+      return;
+    }
+
+    const matches = csvData.filter(item => {
+      const clean = str => String(str || "").trim().toLowerCase().replace(/\s+/g, '');
+      return (
+        clean(item["EAN13"]) === input ||
+        clean(item["NozzleNumber"]) === input ||
+        clean(item["Search Nr"]) === input ||
+        clean(item["Holder Number"]) === input
+      );
+    });
+
+    showResults(matches);
+  }
+
+  let scanner = null;
+  function startScanner() {
+    Html5Qrcode.getCameras().then(devices => {
+      const backCamera = devices.find(device => device.label.toLowerCase().includes("back") || device.label.toLowerCase().includes("rear")) || devices[0];
+      scanner = new Html5Qrcode("reader", { rememberLastUsedCamera: true });
+      scanner.start(
+        { deviceId: { exact: backCamera.id } },
+        { fps: 10, qrbox: { width: 400, height: 250 }, aspectRatio: 1.777, disableFlip: true },
+        decodedText => {
+          scanner.stop().then(() => {
+            scanner.clear();
+            scanner = null;
+            document.getElementById("closeScannerBtn").style.display = "none";
+          });
+          const code = decodedText.trim();
+          document.getElementById("resultsContainer").innerHTML = `<p>📦 Gescand: <strong>${code}</strong></p>`;
+          const matches = csvData.filter(item => String(item["EAN13"]).trim() === code);
+          showResults(matches);
+        },
+        error => { console.warn("Scan fout:", error); }
+      ).then(() => {
+        document.getElementById("closeScannerBtn").style.display = "inline-block";
+      }).catch(err => {
+        console.error("Start scanner mislukt:", err);
+        scanner = null;
+      });
+    }).catch(err => console.error("Camera’s niet beschikbaar:", err));
+  }
+
+  function closeScanner() {
+    if (scanner !== null) {
+      scanner.stop().then(() => {
+        scanner.clear();
+        scanner = null;
+        document.getElementById("closeScannerBtn").style.display = "none";
+      });
+    }
+  }
+
+  document.getElementById("adminAccess").addEventListener("click", () => {
+    document.getElementById("adminOverlay").style.display = "block";
+    document.getElementById("adminPassword").value = "";
+    document.getElementById("loginForm").style.display = "block";
+    document.getElementById("addForm").style.display = "none";
+    document.getElementById("loginMessage").innerText = "";
+  });
+
+  function checkPassword() {
+    const pwd = document.getElementById("adminPassword").value;
+    if (pwd === "kris1989") {
+      adminLoggedIn = true;
+      document.getElementById("loginForm").style.display = "none";
+      document.getElementById("addForm").style.display = "block";
+    } else {
+      adminLoggedIn = false;
+      document.getElementById("loginMessage").innerText = "❌ Verkeerd wachtwoord!";
+    }
+  }
+
+  function closeAdmin() {
+    document.getElementById("adminOverlay").style.display = "none";
+  }
+
+  function addNewEntry() {
+    if (!adminLoggedIn) {
+      alert("❌ Je bent niet ingelogd als admin. Probeer opnieuw.");
+      return;
+    }
+
+    const newEntry = {
+      "Search Nr": document.getElementById("newSearchNr").value.trim(),
+      "NozzleNumber": document.getElementById("newNozzle").value.trim(),
+      "Holder Number": document.getElementById("newHolder").value.trim(),
+      "Bar Nom": parseInt(document.getElementById("newBarNom").value.trim()) || null,
+      "Bar Min": parseInt(document.getElementById("newBarMin").value.trim()) || null,
+      "Bar Max": parseInt(document.getElementById("newBarMax").value.trim()) || null,
+      "EAN13": document.getElementById("newEAN").value.trim()
     };
 
-    firebase.initializeApp(firebaseConfig);
+    console.log("📦 Nieuwe entry klaar om op te slaan:", newEntry);
 
-    const auth = firebase.auth();
-    auth.signInWithEmailAndPassword("kris@hamofa.be", "kris1989")
+    firebase.database().ref("nozzles").push(newEntry)
       .then(() => {
-        console.log("✅ Ingelogd als admin");
-        console.log("🔐 Gebruiker:", auth.currentUser);
+        alert("✅ Toegevoegd!");
+        closeAdmin();
+        csvData.push(newEntry);
       })
-      .catch(error => {
-        console.error("❌ Automatisch inloggen mislukt:", error.message);
+      .catch(err => {
+        console.error("❌ Fout bij toevoegen:", err);
+        alert("❌ Fout bij toevoegen:\n" + err.message);
       });
-
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        console.log("✅ Authentieke gebruiker:", user.email);
-      } else {
-        console.log("🚫 Geen gebruiker ingelogd");
-      }
-    });
-
-    const db = firebase.database();
-    let csvData = [];
-
-    firebase.database().ref("nozzles").on("value", snapshot => {
-      csvData = Object.values(snapshot.val() || {});
-      console.log("👉 Eerste item uit Firebase:", csvData[0]);
-    });
-
-    function showResults(matches) {
-      const container = document.getElementById("resultsContainer");
-      container.innerHTML = "";
-      if (matches.length === 0) {
-        container.innerHTML = "<p>Geen resultaten gevonden.</p>";
-        return;
-      }
-      matches.forEach(match => {
-        const div = document.createElement("div");
-        div.className = "result";
-        div.innerHTML = `
-          <p><strong>Artikel Nr:</strong> ${match["Search Nr"] ?? "-"}</p>
-          <p><strong>Nozzle Nr:</strong> ${match["NozzleNumber"] ?? "-"}</p>
-          <p><strong>Verstuiver Houder:</strong> ${match["Holder Number"] ?? "-"}</p>
-          <p><strong>Nominale druk:</strong> ${match["Bar Nom"] ?? "-"}</p>
-          <p><strong>Minimale druk:</strong> ${match["Bar Min"] ?? "-"}</p>
-          <p><strong>Maximale druk:</strong> ${match["Bar Max"] ?? "-"}</p>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    function manualSearch() {
-      const input = document.getElementById("manualInput").value.trim().toLowerCase().replace(/\s+/g, '');
-      if (input === "") {
-        document.getElementById("resultsContainer").innerHTML = "<p>⚠️ Vul iets in om te zoeken.</p>";
-        return;
-      }
-
-      const matches = csvData.filter(item => {
-        const clean = str => String(str || "").trim().toLowerCase().replace(/\s+/g, '');
-        return (
-          clean(item["EAN13"]) === input ||
-          clean(item["NozzleNumber"]) === input ||
-          clean(item["Search Nr"]) === input ||
-          clean(item["Holder Number"]) === input
-        );
-      });
-
-      showResults(matches);
-    }
-
-    let scanner = null;
-    function startScanner() {
-      Html5Qrcode.getCameras().then(devices => {
-        const backCamera = devices.find(device => device.label.toLowerCase().includes("back") || device.label.toLowerCase().includes("rear")) || devices[0];
-        scanner = new Html5Qrcode("reader", { rememberLastUsedCamera: true });
-        scanner.start(
-          { deviceId: { exact: backCamera.id } },
-          { fps: 10, qrbox: { width: 400, height: 250 }, aspectRatio: 1.777, disableFlip: true },
-          decodedText => {
-            scanner.stop().then(() => {
-              scanner.clear();
-              scanner = null;
-              document.getElementById("closeScannerBtn").style.display = "none";
-            });
-            const code = decodedText.trim();
-            document.getElementById("resultsContainer").innerHTML = `<p>📦 Gescand: <strong>${code}</strong></p>`;
-            const matches = csvData.filter(item => String(item["EAN13"]).trim() === code);
-            showResults(matches);
-          },
-          error => { console.warn("Scan fout:", error); }
-        ).then(() => {
-          document.getElementById("closeScannerBtn").style.display = "inline-block";
-        }).catch(err => {
-          console.error("Start scanner mislukt:", err);
-          scanner = null;
-        });
-      }).catch(err => console.error("Camera’s niet beschikbaar:", err));
-    }
-
-    function closeScanner() {
-      if (scanner !== null) {
-        scanner.stop().then(() => {
-          scanner.clear();
-          scanner = null;
-          document.getElementById("closeScannerBtn").style.display = "none";
-        });
-      }
-    }
-
-    document.getElementById("adminAccess").addEventListener("click", () => {
-      document.getElementById("adminOverlay").style.display = "block";
-      document.getElementById("adminPassword").value = "";
-      document.getElementById("loginForm").style.display = "block";
-      document.getElementById("addForm").style.display = "none";
-      document.getElementById("loginMessage").innerText = "";
-    });
-
-    function checkPassword() {
-      const pwd = document.getElementById("adminPassword").value;
-      if (pwd === "kris1989") {
-        document.getElementById("loginForm").style.display = "none";
-        document.getElementById("addForm").style.display = "block";
-      } else {
-        document.getElementById("loginMessage").innerText = "❌ Verkeerd wachtwoord!";
-      }
-    }
-
-    function closeAdmin() {
-      document.getElementById("adminOverlay").style.display = "none";
-    }
-
-    function addNewEntry() {
-      const user = firebase.auth().currentUser;
-      if (!user) {
-        alert("❌ Je bent niet ingelogd als admin. Probeer opnieuw.");
-        return;
-      }
-
-      const newEntry = {
-        "Search Nr": document.getElementById("newSearchNr").value.trim(),
-        "NozzleNumber": document.getElementById("newNozzle").value.trim(),
-        "Holder Number": document.getElementById("newHolder").value.trim(),
-        "Bar Nom": parseInt(document.getElementById("newBarNom").value.trim()) || null,
-        "Bar Min": parseInt(document.getElementById("newBarMin").value.trim()) || null,
-        "Bar Max": parseInt(document.getElementById("newBarMax").value.trim()) || null,
-        "EAN13": document.getElementById("newEAN").value.trim()
-      };
-
-      console.log("📦 Nieuwe entry klaar om op te slaan:", newEntry);
-
-      firebase.database().ref("nozzles").push(newEntry)
-        .then(() => {
-          alert("✅ Toegevoegd!");
-          closeAdmin();
-          csvData.push(newEntry);
-        })
-        .catch(err => {
-          console.error("❌ Fout bij toevoegen:", err);
-          alert("❌ Fout bij toevoegen:\n" + err.message);
-        });
-    }
-  </script>
-</body>
-</html>
+  }
+</script>
