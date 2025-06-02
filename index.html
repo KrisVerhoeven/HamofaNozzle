@@ -95,7 +95,12 @@
       <input id="newBarNom" placeholder="Bar Nom." /><br />
       <input id="newBarMin" placeholder="Bar Min." /><br />
       <input id="newBarMax" placeholder="Bar Max." /><br />
-      <input id="newEAN" placeholder="EAN13" /><br />
+      <div style="display: flex; align-items: center; gap: 10px;">
+      <input id="newEAN" placeholder="EAN13" style="flex: 1;" />
+      <button type="button" onclick="startEANScan()">📷</button>
+    </div>
+    <div id="eanScanner" style="display:none; margin-top: 10px; border: 1px solid #ccc; width: 100%; max-width: 400px;"></div>
+
       <button onclick="addNewEntry()">Toevoegen</button>
       <button onclick="closeAdmin()">Sluiten</button>
     </div>
@@ -252,6 +257,41 @@
           alert("❌ Fout bij toevoegen:\n" + err.message);
         });
     }
+    let eanScannerInstance = null;
+
+function startEANScan() {
+  const scannerDiv = document.getElementById("eanScanner");
+  scannerDiv.style.display = "block";
+
+  Html5Qrcode.getCameras().then(devices => {
+    const backCam = devices.find(d => d.label.toLowerCase().includes("back")) || devices[0];
+
+    eanScannerInstance = new Html5Qrcode("eanScanner");
+    eanScannerInstance.start(
+      { deviceId: { exact: backCam.id } },
+      { fps: 10, qrbox: { width: 300, height: 150 } },
+      (decodedText) => {
+        document.getElementById("newEAN").value = decodedText.trim();
+        stopEANScan();
+      },
+      (error) => {
+        // optioneel: console.log(error);
+      }
+    );
+  }).catch(err => {
+    console.error("Camera niet beschikbaar:", err);
+  });
+}
+
+function stopEANScan() {
+  if (eanScannerInstance) {
+    eanScannerInstance.stop().then(() => {
+      eanScannerInstance.clear();
+      document.getElementById("eanScanner").style.display = "none";
+      eanScannerInstance = null;
+    });
+  }
+}
   </script>
 </body>
 </html>
