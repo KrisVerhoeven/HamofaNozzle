@@ -269,7 +269,7 @@ function startEANScan() {
     eanScannerInstance = new Html5Qrcode("eanScanner");
     eanScannerInstance.start(
       { deviceId: { exact: backCam.id } },
-      { fps: 10, qrbox: { width: 300, height: 150 } },
+      { fps: 10, qrbox: { width: 400, height: 250 }, aspectRatio: 1.777, disableFlip: true },
       (decodedText) => {
         document.getElementById("newEAN").value = decodedText.trim();
         stopEANScan();
