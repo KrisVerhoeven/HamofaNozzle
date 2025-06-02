@@ -95,10 +95,11 @@
       <input id="newBarNom" placeholder="Bar Nom." /><br />
       <input id="newBarMin" placeholder="Bar Min." /><br />
       <input id="newBarMax" placeholder="Bar Max." /><br />
-      <div style="display: flex; align-items: center; gap: 10px;">
-      <input id="newEAN" placeholder="EAN13" style="flex: 1;" />
-      <button type="button" onclick="startEANScan()">📷</button>
-    </div>
+      <div style="display: flex; flex-wrap: nowrap; align-items: center; max-width: 100%;">
+      <input id="newEAN" placeholder="EAN13" style="flex: 1; min-width: 0;" />
+      <button type="button" onclick="startEANScan()" style="margin-left: 8px; flex-shrink: 0;">📷</button>
+     </div>
+
     <div id="eanScanner" style="display:none; margin-top: 10px; border: 1px solid #ccc; width: 100%; max-width: 400px;"></div>
 
       <button onclick="addNewEntry()">Toevoegen</button>
