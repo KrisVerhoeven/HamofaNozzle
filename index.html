@@ -266,7 +266,7 @@
 
 function startEANScan() {
   const wrapper = document.getElementById("eanScannerWrapper");
-  scannerDiv.style.display = "block";
+  wrapper.style.display = "block";
 
   Html5Qrcode.getCameras().then(devices => {
     const backCam = devices.find(d => d.label.toLowerCase().includes("back")) || devices[0];
