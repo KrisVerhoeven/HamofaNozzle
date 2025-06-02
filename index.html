@@ -2,18 +2,13 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nozzle Scanner - Hamofa</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background-color: #f8f9fa;
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f8f9fa; }
     button {
       font-size: 18px;
       padding: 20px 10px;
@@ -24,12 +19,9 @@
       background-color: #007bff;
       color: white;
       border-radius: 16px;
-      appearance: none;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #0056b3;
-    }
+    button:hover { background-color: #0056b3; }
     input, select {
       font-size: 18px;
       padding: 10px;
@@ -47,7 +39,6 @@
     #closeScannerBtn {
       display: none;
       background-color: #dc3545;
-      color: white;
     }
     .result {
       background: white;
@@ -59,7 +50,6 @@
     .search-block {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
       width: 100%;
       max-width: 400px;
     }
@@ -70,13 +60,11 @@
       right: 10px;
       opacity: 0.05;
       cursor: pointer;
-      z-index: 1000;
     }
   </style>
 </head>
 <body>
   <h2>📷 Nozzle Scanner</h2>
-
   <button onclick="startScanner()">📷 Start Scanner</button>
   <small>📌 Tik op het camerabeeld om scherp te stellen (indien ondersteund)</small>
   <button id="closeScannerBtn" onclick="closeScanner()">❌ Sluit Scanner</button>
@@ -84,20 +72,18 @@
 
   <h3>Zoek handmatig</h3>
   <div class="search-block">
-    <input id="manualInput" type="text" placeholder="Typ EAN13,Nozzle Nr,Artikelnr of Houdernr..." autocomplete="off" />
+    <input id="manualInput" type="text" placeholder="Typ EAN13, Nozzle Nr, Artikelnr of Houdernr..." />
     <button onclick="manualSearch()">🔍 Zoek</button>
   </div>
 
   <h3>Resultaten:</h3>
   <div id="resultsContainer"></div>
 
-  <!-- Admin overlay -->
   <button id="adminAccess">⚙️</button>
   <div id="adminOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; padding:20px;">
     <div id="loginForm">
       <h2>🔐 Admin Login</h2>
-      <input type="email" id="adminEmail" placeholder="Admin e-mailadres" /><br />
-      <input type="password" id="adminPassword" placeholder="Wachtwoord..." /><br />
+      <input type="password" id="adminPassword" placeholder="Wachtwoord..." />
       <button onclick="checkPassword()">Inloggen</button>
       <p id="loginMessage" style="color: red;"></p>
     </div>
@@ -121,7 +107,7 @@
       authDomain: "hamofa-nozzles.firebaseapp.com",
       databaseURL: "https://hamofa-nozzles-default-rtdb.europe-west1.firebasedatabase.app",
       projectId: "hamofa-nozzles",
-      storageBucket: "hamofa-nozzles.firebasestorage.app",
+      storageBucket: "hamofa-nozzles.appspot.com",
       messagingSenderId: "254337858286",
       appId: "1:254337858286:web:00bc75aaf9662016fd51ff"
     };
@@ -164,7 +150,6 @@
         document.getElementById("resultsContainer").innerHTML = "<p>⚠️ Vul iets in om te zoeken.</p>";
         return;
       }
-
       const matches = csvData.filter(item => {
         const clean = str => String(str || "").trim().toLowerCase().replace(/\s+/g, '');
         return (
@@ -174,14 +159,13 @@
           clean(item["Holder Number"]) === input
         );
       });
-
       showResults(matches);
     }
 
     let scanner = null;
     function startScanner() {
       Html5Qrcode.getCameras().then(devices => {
-        const backCamera = devices.find(device => device.label.toLowerCase().includes("back") || device.label.toLowerCase().includes("rear")) || devices[0];
+        const backCamera = devices.find(d => d.label.toLowerCase().includes("back") || d.label.toLowerCase().includes("rear")) || devices[0];
         scanner = new Html5Qrcode("reader", { rememberLastUsedCamera: true });
         scanner.start(
           { deviceId: { exact: backCamera.id } },
@@ -219,7 +203,6 @@
 
     document.getElementById("adminAccess").addEventListener("click", () => {
       document.getElementById("adminOverlay").style.display = "block";
-      document.getElementById("adminEmail").value = "";
       document.getElementById("adminPassword").value = "";
       document.getElementById("loginForm").style.display = "block";
       document.getElementById("addForm").style.display = "none";
@@ -227,20 +210,15 @@
     });
 
     function checkPassword() {
-      const email = document.getElementById("adminEmail").value.trim();
-      const password = document.getElementById("adminPassword").value;
-
-      firebase.auth().signInWithEmailAndPassword(email, password)
-        .then(userCredential => {
-          console.log("✅ Ingelogd als:", userCredential.user.email);
-          adminLoggedIn = true;
-          document.getElementById("loginForm").style.display = "none";
-          document.getElementById("addForm").style.display = "block";
-        })
-        .catch(error => {
-          console.error("❌ Login mislukt:", error.message);
-          document.getElementById("loginMessage").innerText = "❌ " + error.message;
-        });
+      const pwd = document.getElementById("adminPassword").value;
+      if (pwd === "kris1989") {
+        adminLoggedIn = true;
+        document.getElementById("loginForm").style.display = "none";
+        document.getElementById("addForm").style.display = "block";
+      } else {
+        adminLoggedIn = false;
+        document.getElementById("loginMessage").innerText = "❌ Verkeerd wachtwoord!";
+      }
     }
 
     function closeAdmin() {
@@ -248,8 +226,7 @@
     }
 
     function addNewEntry() {
-      const user = firebase.auth().currentUser;
-      if (!user) {
+      if (!adminLoggedIn) {
         alert("❌ Je bent niet ingelogd als admin. Probeer opnieuw.");
         return;
       }
